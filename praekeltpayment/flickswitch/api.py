@@ -24,10 +24,7 @@ def login():
         'password': password,
         'as_json': True
         }
-    headers = {'accept': 'application/json'}
-
-    result = json.loads(requests.post('%slogin/' % url,
-                                        params, headers=headers).text)
+    result = json.loads(requests.post('%slogin/' % url, params).text)
 
     if not result.get('status') == SUCCESS:
         raise Exception('Flicksitch: Invalid username or password')
@@ -38,7 +35,6 @@ def login():
 @task(ignore_result=True)
 def send_aritime(instance):
     url = settings.PRAEKELT_PAYMENT.get('flickswitch_url')
-    headers = {'accept': 'application/json'}
 
     network_operator = get_network_operator(instance.msisdn)
     if not network_operator:
@@ -65,8 +61,7 @@ def send_aritime(instance):
             'network code': instance.pk,
             'as_json': True,
         }
-    result = json.loads(requests.post('%srecharge/' % url,
-                                        params, headers=headers).text)
+    result = json.loads(requests.post('%srecharge/' % url, params).text)
 
     if result.get('status') == SUCCESS:
         instance.state = PAYMENT_SUBMITTED
