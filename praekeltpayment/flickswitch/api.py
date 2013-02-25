@@ -26,7 +26,7 @@ def login():
         }
     headers = {'accept': 'application/json'}
 
-    result = json.loads(requests.post('%s/recharge/' % url,
+    result = json.loads(requests.post('%slogin/' % url,
                                         params, headers=headers).text)
 
     if not result.get('status') == SUCCESS:
