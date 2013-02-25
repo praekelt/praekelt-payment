@@ -28,7 +28,7 @@ You have to specify your FlickSwitch account details::
  PRAEKELT_PAYMENT = {
      'flickswitch_username': 'xxx',
      'flickswitch_password': 'xxx',
-     'flickswitch_url': 'https://api.hotsocket.co.za:8080/' #trailing slash included,
+     'flickswitch_url': 'http://api.hotsocket.co.za:8080/' #trailing slash included,
  }
 
 **Django Celery**
