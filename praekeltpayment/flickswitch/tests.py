@@ -4,7 +4,8 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'praekeltpayment.flickswitch.settings'
 from django.test import TestCase
 from praekeltpayment.flickswitch.utils import get_network_operator
 from praekeltpayment.flickswitch.models import *
-from praekeltpayment.flickswitch.api import apply_send_airtime
+from praekeltpayment.flickswitch.api import (apply_send_airtime,
+    apply_update_payment_status, STATUS_FAILED, STATUS_SUCCESSFUL)
 
 
 class FlickSwitchPaymentTestCase(TestCase):
@@ -44,6 +45,7 @@ class FlickSwitchPaymentTestCase(TestCase):
         self.assertEqual(p.state, PAYMENT_CREATED)
 
         p.state = PAYMENT_PENDING  # fake api gateway call
+        p.save()
 
         result = {
             'status': '0000',
@@ -51,11 +53,12 @@ class FlickSwitchPaymentTestCase(TestCase):
         apply_send_airtime(p, result)
         self.assertEqual(p.state, PAYMENT_SUBMITTED)
 
-    def test_failed_payment_state(self):
+    def test_failed_payment_submit_state(self):
         p = FlickSwitchPayment.objects.create(msisdn='27821234567', amount=500)
         self.assertEqual(p.state, PAYMENT_CREATED)
 
         p.state = PAYMENT_PENDING  # fake api gateway call
+        p.save()
 
         result = {
             'status': '1111',
@@ -65,3 +68,36 @@ class FlickSwitchPaymentTestCase(TestCase):
         self.assertEqual(p.state, PAYMENT_FAILED)
         self.assertEqual(p.fail_code, '1111')
         self.assertEqual(p.fail_reason, 'Invalid')
+
+    def test_successful_payment_state(self):
+        p = FlickSwitchPayment.objects.create(msisdn='27821234567', amount=500)
+        self.assertEqual(p.state, PAYMENT_CREATED)
+
+        p.state = PAYMENT_SUBMITTED  # fake api gateway call
+        p.save()
+
+        result = {
+            'status': '0000',
+            'recharge_status_cd': STATUS_SUCCESSFUL,
+        }
+        apply_update_payment_status(p, result)
+        self.assertEqual(p.state, PAYMENT_SUCCESSFUL)
+        self.assertIsNone(p.fail_code)
+        self.assertIsNone(p.fail_reason)
+
+    def test_failed_payment_state(self):
+        p = FlickSwitchPayment.objects.create(msisdn='27821234567', amount=500)
+        self.assertEqual(p.state, PAYMENT_CREATED)
+
+        p.state = PAYMENT_SUBMITTED  # fake api gateway call
+        p.save()
+
+        result = {
+            'status': '0000',
+            'recharge_status_cd': STATUS_FAILED,
+            'recharge_status': 'Incorrect Network Operator',
+        }
+        apply_update_payment_status(p, result)
+        self.assertEqual(p.state, PAYMENT_FAILED)
+        self.assertEqual(p.fail_code, STATUS_FAILED)
+        self.assertEqual(p.fail_reason, 'Incorrect Network Operator')
