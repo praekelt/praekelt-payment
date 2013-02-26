@@ -38,7 +38,7 @@ You need to include the scheduler to check for recharge status::
  from datetime import timedelta
  CELERYBEAT_SCHEDULE = {
      'update-recharge-status-every-minute': {
-         'task': 'praekeltpayment.flickswitch.tasks.update_recharge_status',
+         'task': 'praekeltpayment.flickswitch.api.update_payment_status',
          'schedule': timedelta(seconds=60)
      },
      ...
