@@ -3,4 +3,6 @@
 *.py~
 *.db
 *.html~
-
+/build/
+/dist/
+*.egg-info/
