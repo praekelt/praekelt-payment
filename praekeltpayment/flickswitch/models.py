@@ -18,10 +18,10 @@ PAYMENT_STATES = (
 
 class FlickSwitchPayment(models.Model):
     date = models.DateTimeField(auto_now_add=True)
-    msisdn = models.CharField()
+    msisdn = models.CharField(max_length=20)
     amount = models.PositiveIntegerField()
-    fail_reason = models.CharField(blank=True, null=True)
-    fail_code = models.CharField(blank=True, null=True)
+    fail_reason = models.CharField(max_length=100, blank=True, null=True)
+    fail_code = models.CharField(max_length=20, blank=True, null=True)
     state = models.PositiveIntegerField(choices=PAYMENT_STATES,
                                         default=PAYMENT_CREATED)
 
