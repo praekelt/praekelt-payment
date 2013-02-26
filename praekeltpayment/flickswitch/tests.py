@@ -4,6 +4,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'praekeltpayment.flickswitch.settings'
 from django.test import TestCase
 from praekeltpayment.flickswitch.utils import get_network_operator
 from praekeltpayment.flickswitch.models import *
+from praekeltpayment.flickswitch.api import apply_send_airtime
 
 
 class FlickSwitchPaymentTestCase(TestCase):
@@ -34,6 +35,33 @@ class FlickSwitchPaymentTestCase(TestCase):
         op = get_network_operator('27754000000')
         self.assertEqual(op, None)
 
-    def test_send_airtime_task(self):
+    def test_initial_payment_state(self):
         p = FlickSwitchPayment.objects.create(msisdn='27821234567', amount=500)
         self.assertEqual(p.state, PAYMENT_CREATED)
+
+    def test_submitted_payment_state(self):
+        p = FlickSwitchPayment.objects.create(msisdn='27821234567', amount=500)
+        self.assertEqual(p.state, PAYMENT_CREATED)
+
+        p.state = PAYMENT_PENDING  # fake api gateway call
+
+        result = {
+            'status': '0000',
+        }
+        apply_send_airtime(p, result)
+        self.assertEqual(p.state, PAYMENT_SUBMITTED)
+
+    def test_failed_payment_state(self):
+        p = FlickSwitchPayment.objects.create(msisdn='27821234567', amount=500)
+        self.assertEqual(p.state, PAYMENT_CREATED)
+
+        p.state = PAYMENT_PENDING  # fake api gateway call
+
+        result = {
+            'status': '1111',
+            'message': 'Invalid',
+        }
+        apply_send_airtime(p, result)
+        self.assertEqual(p.state, PAYMENT_FAILED)
+        self.assertEqual(p.fail_code, '1111')
+        self.assertEqual(p.fail_reason, 'Invalid')
