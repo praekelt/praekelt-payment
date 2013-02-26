@@ -39,42 +39,45 @@ def login():
 
 
 @task(ignore_result=True)
-def send_aritime(instance):
-    network_operator = get_network_operator(instance.msisdn)
+def send_aritime(payment):
+    network_operator = get_network_operator(payment.msisdn)
     if not network_operator:
-        instance.state = PAYMENT_FAILED
-        instance.fail_reason = 'Unknown network operator'
-        instance.save()
+        payment.state = PAYMENT_FAILED
+        payment.fail_reason = 'Unknown network operator'
+        payment.save()
         return
 
     try:
         token = login()
     except:
-        instance.state = PAYMENT_FAILED
-        instance.fail_reason = 'Flickswitch login failed'
-        instance.save()
+        payment.state = PAYMENT_FAILED
+        payment.fail_reason = 'Flickswitch login failed'
+        payment.save()
         return
 
     params = {
             'token': token,
             'username': settings.PRAEKELT_PAYMENT.get('flickswitch_username'),
-            'recipient_msisdn': instance.msisdn,
+            'recipient_msisdn': payment.msisdn,
             'product_code': 'AIRTIME',
-            'denomination': instance.amount,
-            'reference': instance.pk,
+            'denomination': payment.amount,
+            'reference': payment.pk,
             'network_code': network_operator,
             'as_json': True,
         }
     result = json.loads(requests.post(RECHARGE_URL, params).text)
+    apply_send_airtime(payment, result)
 
+
+def apply_send_airtime(payment, result):
     if result.get('status') == SUCCESS:
-        instance.state = PAYMENT_SUBMITTED
-        instance.save()
+        payment.state = PAYMENT_SUBMITTED
+        payment.save()
     else:
-        instance.state = PAYMENT_FAILED
-        instance.fail_reason = result.get('message')
-        instance.fail_code = result.get('status')
-        instance.save()
+        payment.state = PAYMENT_FAILED
+        payment.fail_reason = result.get('message')
+        payment.fail_code = result.get('status')
+        payment.save()
 
 
 @task(ignore_result=True)
@@ -89,15 +92,18 @@ def update_payment_status():
             'as_json': True,
         }
         result = json.loads(requests.post(STATUS_URL, params).text)
+        apply_update_payment_status(payment, result)
 
-        if result.get('status') == SUCCESS:
-            if result.get('recharge_status_cd') == STATUS_FAILED:
-                payment.state = PAYMENT_FAILED
-                payment.fail_code = STATUS_FAILED
-                payment.fail_reason = result.get('recharge_status')
-                payment.save()
-            elif result.get('recharge_status_cd') == STATUS_SUCCESSFUL:
-                payment.state = PAYMENT_SUCCESSFUL
-                payment.fail_code = None
-                payment.fail_reason = None
-                payment.save()
+
+def apply_update_payment_status(payment, result):
+    if result.get('status') == SUCCESS:
+        if result.get('recharge_status_cd') == STATUS_FAILED:
+            payment.state = PAYMENT_FAILED
+            payment.fail_code = STATUS_FAILED
+            payment.fail_reason = result.get('recharge_status')
+            payment.save()
+        elif result.get('recharge_status_cd') == STATUS_SUCCESSFUL:
+            payment.state = PAYMENT_SUCCESSFUL
+            payment.fail_code = None
+            payment.fail_reason = None
+            payment.save()

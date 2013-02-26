@@ -1,3 +1,6 @@
+import os
+os.environ['DJANGO_SETTINGS_MODULE'] = 'jmbovlive.settings'
+
 from unittest import TestCase
 from praekeltpayment.flickswitch.utils import get_network_operator
 
