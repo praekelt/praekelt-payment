@@ -1,11 +1,12 @@
 import os
-os.environ['DJANGO_SETTINGS_MODULE'] = 'jmbovlive.settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'praekeltpayment.flickswitch.settings'
 
-from unittest import TestCase
+from django.test import TestCase
 from praekeltpayment.flickswitch.utils import get_network_operator
+from praekeltpayment.flickswitch.models import *
 
 
-class TestSequenceFunctions(TestCase):
+class FlickSwitchPaymentTestCase(TestCase):
     def test_network_operator_mapping(self):
         op = get_network_operator('27829000000')
         self.assertEqual(op, 'VOD')
@@ -32,3 +33,7 @@ class TestSequenceFunctions(TestCase):
     def test_invalid_msisdn(self):
         op = get_network_operator('27754000000')
         self.assertEqual(op, None)
+
+    def test_send_airtime_task(self):
+        p = FlickSwitchPayment.objects.create(msisdn='27821234567', amount=500)
+        self.assertEqual(p.state, PAYMENT_CREATED)

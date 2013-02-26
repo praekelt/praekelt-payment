@@ -25,3 +25,9 @@ DATABASES = {
         'PORT': '',
     }
 }
+
+INSTALLED_APPS = (
+    'flickswitch',
+    'django_nose',
+    'south',
+)
