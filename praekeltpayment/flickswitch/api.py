@@ -39,7 +39,7 @@ def login():
 
 
 @task(ignore_result=True)
-def send_aritime(payment):
+def send_airtime(payment):
     network_operator = get_network_operator(payment.msisdn)
     if not network_operator:
         payment.state = PAYMENT_FAILED
