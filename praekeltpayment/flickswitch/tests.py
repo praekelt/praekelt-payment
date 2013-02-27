@@ -1,6 +1,3 @@
-import os
-os.environ['DJANGO_SETTINGS_MODULE'] = 'praekeltpayment.flickswitch.settings'
-
 from django.test import TestCase
 from praekeltpayment.flickswitch.utils import get_network_operator
 from praekeltpayment.flickswitch.models import *
