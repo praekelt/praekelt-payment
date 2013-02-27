@@ -15,15 +15,29 @@ RECHARGE_URL = '%srecharge/' % settings.PRAEKELT_PAYMENT.get('flickswitch_url')
 STATUS_URL = '%sstatus/' % settings.PRAEKELT_PAYMENT.get('flickswitch_url')
 
 
+class FlickSwitchException(Exception):
+    pass
+
+
+class LoginException(FlickSwitchException):
+    pass
+
+
+class BadConfigurationException(FlickSwitchException):
+    pass
+
+
 def login():
     if not hasattr(settings, 'PRAEKELT_PAYMENT'):
-        raise Exception('Imporperly configured. Please check your settings file.')
+        msg = 'Imporperly configured. Please check your settings file.'
+        raise BadConfigurationException(msg)
 
     username = settings.PRAEKELT_PAYMENT.get('flickswitch_username')
     password = settings.PRAEKELT_PAYMENT.get('flickswitch_password')
 
     if not username or not password:
-        raise Exception('Imporperly configured. Please check your settings file.')
+        msg = 'Imporperly configured. Please check your settings file.'
+        raise BadConfigurationException(msg)
 
     params = {
         'username': username,
@@ -33,7 +47,7 @@ def login():
     result = json.loads(requests.post(LOGIN_URL, params).text)
 
     if not result.get('status') == SUCCESS:
-        raise Exception('Flicksitch: Invalid username or password')
+        raise LoginException('Invalid username or password')
 
     return result.get('token')
 
@@ -49,7 +63,7 @@ def send_airtime(payment):
 
     try:
         token = login()
-    except:
+    except LoginException:
         payment.state = PAYMENT_FAILED
         payment.fail_reason = 'Flickswitch login failed'
         payment.save()
