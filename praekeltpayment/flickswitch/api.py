@@ -2,17 +2,17 @@ from celery import task
 import requests
 import json
 from django.conf import settings
-from praekeltpayment.flickswitch.models import (FlickSwitchPayment,
-    PAYMENT_SUBMITTED, PAYMENT_FAILED, PAYMENT_SUCCESSFUL)
 from praekeltpayment.flickswitch.utils import get_network_operator
 
+PAYMENT_FAILED = 3
+PAYMENT_SUBMITTED = 1
+
 SUCCESS = '0000'
-STATUS_FAILED = 2
-STATUS_SUCCESSFUL = 3
+STATUS_FAILED = '2'
+STATUS_SUCCESSFUL = '3'
 
 LOGIN_URL = '%slogin/' % settings.PRAEKELT_PAYMENT.get('flickswitch_url')
 RECHARGE_URL = '%srecharge/' % settings.PRAEKELT_PAYMENT.get('flickswitch_url')
-STATUS_URL = '%sstatus/' % settings.PRAEKELT_PAYMENT.get('flickswitch_url')
 
 
 class FlickSwitchException(Exception):
@@ -44,16 +44,15 @@ def login():
         'password': password,
         'as_json': True
         }
-    result = json.loads(requests.post(LOGIN_URL, params).text)
+    result = json.loads(requests.post(LOGIN_URL, params).text).get('response')
 
-    if not result.get('status') == SUCCESS:
+    if not result or not result.get('status') == SUCCESS:
         raise LoginException('Invalid username or password')
 
     return result.get('token')
 
 
-@task(ignore_result=True)
-def send_airtime(payment):
+def api_recharge(payment, product_code):
     network_operator = get_network_operator(payment.msisdn)
     if not network_operator:
         payment.state = PAYMENT_FAILED
@@ -70,20 +69,22 @@ def send_airtime(payment):
         return
 
     params = {
-            'token': token,
-            'username': settings.PRAEKELT_PAYMENT.get('flickswitch_username'),
-            'recipient_msisdn': payment.msisdn,
-            'product_code': 'AIRTIME',
-            'denomination': payment.amount,
-            'reference': payment.pk,
-            'network_code': network_operator,
-            'as_json': True,
-        }
-    result = json.loads(requests.post(RECHARGE_URL, params).text)
-    apply_send_airtime(payment, result)
+        'token': token,
+        'username': settings.PRAEKELT_PAYMENT.get('flickswitch_username'),
+        'recipient_msisdn': payment.msisdn,
+        'product_code': product_code,
+        'denomination': payment.amount,
+        'reference': payment.pk,
+        'network_code': network_operator,
+        'as_json': True,
+    }
+    return json.loads(requests.post(RECHARGE_URL, params).text).get('response')
 
 
-def apply_send_airtime(payment, result):
+@task(ignore_result=True)
+def send_airtime(payment):
+    result = api_recharge(payment, 'AIRTIME')
+
     if result.get('status') == SUCCESS:
         payment.state = PAYMENT_SUBMITTED
         payment.save()
@@ -92,32 +93,3 @@ def apply_send_airtime(payment, result):
         payment.fail_reason = result.get('message')
         payment.fail_code = result.get('status')
         payment.save()
-
-
-@task(ignore_result=True)
-def update_payment_status():
-    token = login()
-
-    for payment in FlickSwitchPayment.objects.filter(state=PAYMENT_SUBMITTED):
-        params = {
-            'token': token,
-            'username': settings.PRAEKELT_PAYMENT.get('flickswitch_username'),
-            'reference': payment.pk,
-            'as_json': True,
-        }
-        result = json.loads(requests.post(STATUS_URL, params).text)
-        apply_update_payment_status(payment, result)
-
-
-def apply_update_payment_status(payment, result):
-    if result.get('status') == SUCCESS:
-        if result.get('recharge_status_cd') == STATUS_FAILED:
-            payment.state = PAYMENT_FAILED
-            payment.fail_code = STATUS_FAILED
-            payment.fail_reason = result.get('recharge_status')
-            payment.save()
-        elif result.get('recharge_status_cd') == STATUS_SUCCESSFUL:
-            payment.state = PAYMENT_SUCCESSFUL
-            payment.fail_code = None
-            payment.fail_reason = None
-            payment.save()
