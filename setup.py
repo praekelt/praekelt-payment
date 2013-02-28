@@ -6,7 +6,7 @@ def listify(filename):
 
 setup(
     name="praekeltpayment",
-    version="1.0a",
+    version="1.0b",
     url='http://github.com/praekelt/praekelt-payment.git',
     license='BSD',
     description="This is a collection of all payment gateways we use",
