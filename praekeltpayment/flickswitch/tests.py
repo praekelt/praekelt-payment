@@ -3,7 +3,7 @@ from flickswitch.utils import get_network_operator
 from flickswitch.models import (FlickSwitchPayment,
     PAYMENT_CREATED, PAYMENT_SUBMITTED, PAYMENT_FAILED,
     PAYMENT_SUCCESSFUL)
-from praekeltpayment.flickswitch.api import STATUS_FAILED, STATUS_SUCCESSFUL
+from praekeltpayment.flickswitch.tasks import STATUS_FAILED, STATUS_SUCCESSFUL
 from praekeltpayment.flickswitch import tasks
 from mock import patch
 
@@ -120,5 +120,5 @@ class FlickSwitchPaymentTestCase(TestCase):
 
         p = FlickSwitchPayment.objects.get(pk=p.pk)
         self.assertEqual(p.state, PAYMENT_FAILED)
-        self.assertEqual(p.fail_code, STATUS_FAILED)
+        self.assertEqual(p.fail_code, '2')
         self.assertEqual(p.fail_reason, 'Incorrect Network Operator')

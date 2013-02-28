@@ -8,8 +8,6 @@ PAYMENT_FAILED = 3
 PAYMENT_SUBMITTED = 1
 
 SUCCESS = '0000'
-STATUS_FAILED = '2'
-STATUS_SUCCESSFUL = '3'
 
 LOGIN_URL = '%slogin/' % settings.PRAEKELT_PAYMENT.get('flickswitch_url')
 RECHARGE_URL = '%srecharge/' % settings.PRAEKELT_PAYMENT.get('flickswitch_url')

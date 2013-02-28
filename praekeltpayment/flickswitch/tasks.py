@@ -8,8 +8,8 @@ from praekeltpayment.flickswitch.models import (FlickSwitchPayment,
     PAYMENT_SUBMITTED, PAYMENT_FAILED, PAYMENT_SUCCESSFUL)
 
 SUCCESS = '0000'
-STATUS_FAILED = '2'
-STATUS_SUCCESSFUL = '3'
+STATUS_FAILED = 2
+STATUS_SUCCESSFUL = 3
 STATUS_URL = '%sstatus/' % settings.PRAEKELT_PAYMENT.get('flickswitch_url')
 
 
