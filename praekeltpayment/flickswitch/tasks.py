@@ -21,7 +21,7 @@ def api_check_status(payment):
         'reference': payment.pk,
         'as_json': True,
     }
-    return json.loads(requests.post(STATUS_URL, params).text)
+    return json.loads(requests.post(STATUS_URL, params).text).get('response')
 
 
 @task(ignore_result=True)
