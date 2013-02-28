@@ -1,5 +1,5 @@
 from django.db import models
-from flickswitch.api import send_airtime
+from praekeltpayment.flickswitch.api import send_airtime
 
 PAYMENT_CREATED = 0
 PAYMENT_SUBMITTED = 1

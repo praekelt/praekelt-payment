@@ -3,8 +3,8 @@ import requests
 from django.conf import settings
 from celery import task
 
-from flickswitch.api import login
-from flickswitch.models import (FlickSwitchPayment,
+from praekeltpayment.flickswitch.api import login
+from praekeltpayment.flickswitch.models import (FlickSwitchPayment,
     PAYMENT_SUBMITTED, PAYMENT_FAILED, PAYMENT_SUCCESSFUL)
 
 SUCCESS = '0000'

@@ -8,7 +8,7 @@ PRAEKELT_PAYMENT = {
 from datetime import timedelta
 CELERYBEAT_SCHEDULE = {
     'update-recharge-status-every-minute': {
-        'task': 'flickswitch.tasks.update_payment_status',
+        'task': 'praekeltpayment.flickswitch.tasks.update_payment_status',
         'schedule': timedelta(seconds=60)
     },
 }
@@ -26,8 +26,10 @@ DATABASES = {
     }
 }
 
+SECRET_KEY = '_l*l+!!^-t6%kzw*occccczgjdq=cn!*8q*b@&k^zn7spa)#)i'
+
 INSTALLED_APPS = (
-    'flickswitch',
+    'praekeltpayment.flickswitch',
     'django_nose',
     'south',
     'djcelery',
@@ -37,5 +39,5 @@ INSTALLED_APPS = (
 #djcelery.setup_loader()
 
 CELERY_ALWAYS_EAGER = True
-CELERY_IMPORTS = ('flickswitch.api.update_payment_status',
-                    'flickswitch.api.send_airtime')
+CELERY_IMPORTS = ('praekeltpayment.flickswitch.tasks.update_payment_status',
+                    'praekeltpayment.flickswitch.api.send_airtime')

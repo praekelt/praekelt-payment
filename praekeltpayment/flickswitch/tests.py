@@ -3,8 +3,8 @@ from flickswitch.utils import get_network_operator
 from flickswitch.models import (FlickSwitchPayment,
     PAYMENT_CREATED, PAYMENT_SUBMITTED, PAYMENT_FAILED,
     PAYMENT_SUCCESSFUL)
-from flickswitch.api import STATUS_FAILED, STATUS_SUCCESSFUL
-from flickswitch import tasks
+from praekeltpayment.flickswitch.api import STATUS_FAILED, STATUS_SUCCESSFUL
+from praekeltpayment.flickswitch import tasks
 from mock import patch
 
 
@@ -40,13 +40,14 @@ class FlickSwitchPaymentTestCase(TestCase):
         p = FlickSwitchPayment.objects.create(msisdn='27821234567', amount=500)
         self.assertEqual(p.state, PAYMENT_CREATED)
 
-    @patch('flickswitch.api.api_recharge')
-    @patch('flickswitch.api.login')
+    @patch('praekeltpayment.flickswitch.api.api_recharge')
+    @patch('praekeltpayment.flickswitch.api.login')
     def test_submitted_payment_state(self, mock_login,
         mock_api_recharge):
         p = FlickSwitchPayment.objects.create(msisdn='27821234567', amount=500)
         self.assertEqual(p.state, PAYMENT_CREATED)
 
+        mock_login.return_value = 'sampletoken'
         result = {
             'status': '0000',
         }
@@ -56,8 +57,8 @@ class FlickSwitchPaymentTestCase(TestCase):
         p = FlickSwitchPayment.objects.get(pk=p.pk)
         self.assertEqual(p.state, PAYMENT_SUBMITTED)
 
-    @patch('flickswitch.api.api_recharge')
-    @patch('flickswitch.api.login')
+    @patch('praekeltpayment.flickswitch.api.api_recharge')
+    @patch('praekeltpayment.flickswitch.api.login')
     def test_failed_payment_submit_state(self, mock_login,
         mock_api_recharge):
         p = FlickSwitchPayment.objects.create(msisdn='27821234567', amount=500)
@@ -76,8 +77,8 @@ class FlickSwitchPaymentTestCase(TestCase):
         self.assertEqual(p.fail_code, '1111')
         self.assertEqual(p.fail_reason, 'Invalid')
 
-    @patch('flickswitch.tasks.api_check_status')
-    @patch('flickswitch.api.login')
+    @patch('praekeltpayment.flickswitch.tasks.api_check_status')
+    @patch('praekeltpayment.flickswitch.api.login')
     def test_successful_payment_state(self, mock_login, mock_api_check_status):
         p = FlickSwitchPayment.objects.create(msisdn='27821234567', amount=500)
         self.assertEqual(p.state, PAYMENT_CREATED)
@@ -99,8 +100,8 @@ class FlickSwitchPaymentTestCase(TestCase):
         self.assertIsNone(p.fail_code)
         self.assertIsNone(p.fail_reason)
 
-    @patch('flickswitch.tasks.api_check_status')
-    @patch('flickswitch.api.login')
+    @patch('praekeltpayment.flickswitch.tasks.api_check_status')
+    @patch('praekeltpayment.flickswitch.api.login')
     def test_failed_payment_state(self, mock_login, mock_api_check_status):
         p = FlickSwitchPayment.objects.create(msisdn='27821234567', amount=500)
         self.assertEqual(p.state, PAYMENT_CREATED)
